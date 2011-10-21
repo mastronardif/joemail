@@ -22,8 +22,6 @@ then
 fi
 
 
-
-#oldpath=$cwd
 cd $mypath
 
 if /usr/bin/perl -wt $mypath/testmymbox03.pl $THROTTLE -s "joemailweb"  -o \
@@ -37,7 +35,6 @@ then
 
 /usr/bin/perl $mypath/mysend04.pl          $myOutpath/err.txt
 
-#FM 10/6/11 chmod 666 /usr/home/pl1321/boxes/joeschedule.com/joemail^/.imap/joemail/sent88
 /usr/www/users/pl1321/cgi-bin/gocleanmbox.sh
 
 echo  "<br/>test3 "
@@ -53,11 +50,8 @@ then
 
 else
  echo "No joemailweb mail(test)!"
- #set | grep -i bob
  echo "<br/>-------------<br/>"
-#/usr/bin/perl -wT  $mypath/each.pl
 fi
-#cd $oldpath
 chmod 666 /usr/home/pl1321/boxes/joeschedule.com/joemail^/.imap/joemail/sent88
 print "<br/>Done! 05"
 
