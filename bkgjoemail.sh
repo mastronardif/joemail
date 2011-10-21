@@ -1,6 +1,6 @@
 #!/usr/local/bin/ksh
 
-#lastmodified: 10/21/2011 2:25 pm
+#lastmodified: 10/21/2011 2:31 pm
 
 START=$(date +%s)
 print "Content-type: text/html\n\n"
