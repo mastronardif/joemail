@@ -6,20 +6,27 @@
 File: .pl
 
 Purpose: 
-last Modified: 10/20/11
 =cut
 
 require 5;
 use strict;
 use strict 'vars';
+
 use URI;
 require LWP::UserAgent;
 use HTTP::Cookies;
+
+#use LWP::Simple;
 use URI::Escape;
+
 use HTML::TokeParser;
 use HTML::TreeBuilder;
+
 use HTML::Parse;
+
 use HTML::FormatText;
+
+
 use Getopt::Long;
 use Pod::Usage;
 
@@ -68,7 +75,9 @@ if ($option{debug})
    print "\n$0 end\n";
 }
 
+#my $url = $ARGV[0];
 my $url = $option{url};
+#my $strategy = $option{ae} || "LargestContentExtractor"; # or strait get url if boilplate reaches quota.
 
 my %ae = ('a' => 'ArticleExtractor',
           'l' => 'LargestContentExtractor',
@@ -79,17 +88,32 @@ my %ae = ('a' => 'ArticleExtractor',
 
 my $strategy = $ae{$option{ae}} || "";
 
+
+#my $url = $ARGV[0] || "http://www.google.com/url?sa=X&q=http://www.style.com/stylefile/2011/08/bernie-madoffs-pants-now-available-for-your-ipad/&ct=ga&cad=CAcQAhgAIAEoATAEOABAws-F8gRIAVgAYgVlbi1VUw&cd=GPz95wmTMrU&usg=AFQjCNFDeVJECiALh2Utp0TwJixJCh8CiQ";
+#my $argStrategy = $ARGV[1] || "KeepEverythingExtractor";
+#print "url($url)\n"; exit(0);
+
 my $html   = ""; 
+#get($url) || print "Couldn't get ($url)!"; #die "Couldn't get ($url)!";
+
+#exit(0);	
 
  my $ua = LWP::UserAgent->new;
  $ua->cookie_jar(HTTP::Cookies->new(file => "lwpcookies.txt",
                                       autosave => 1));
 
-$ua->timeout(10);
-$ua->env_proxy;
+ $ua->timeout(10);
+ $ua->env_proxy;
 $ua->max_redirect(21);
+#print "ua->max_redirect" . $ua->max_redirect ."\n";
 
-use HTTP::Request::Common qw(GET);
+ ##my $response = $ua->get($url);
+ 
+ 
+ 
+ # 8/17/11 begin
+  use HTTP::Request::Common qw(GET);
+#print "\n-2-2-2-2-2-2\n$Urls[0]\n 111111111111111111 \n";
 # cheesyness for boilerpipe remove the url=___ which boilerpipe uses.
 if($strategy && $Urls[0] =~ m/url\?/i)
 {
@@ -97,16 +121,31 @@ if($strategy && $Urls[0] =~ m/url\?/i)
    $Urls[0] =~ s/&.*//;
 }
 
-#my $strategy = $argStrategy; ## 'LargestContentExtractor';
-my $boil22 = "http://boilerpipe-web.appspot.com/extract?url=". uri_escape($Urls[0]) . "&extractor=" . $strategy . "&output=htmlFragment";
+#print "\n--------\n$Urls[0]\n nnnnnnnnnnnnnnnnnnnnnnn\n"; exit(0);
+  #my $strategy = $argStrategy; ## 'LargestContentExtractor';
+  my $boil22 = "http://boilerpipe-web.appspot.com/extract?url=". uri_escape($Urls[0]) . "&extractor=" . $strategy . "&output=htmlFragment";
 
+#if ($option{ae} eq 'n')
+my $response;
+my $BASE; 
+
+my $nTrys = 0;
+LINE: while($nTrys < 3) 
+{
+   $nTrys++;
 if (!$strategy)
 {
    $boil22 = $Urls[0];
 }
+#print "\n\n--------\n$boil22\n AAAAAAAAAAAAAAAAA \n";
 
-  my $response = $ua->get($boil22);
-  my $BASE; 
+
+  #  my $req = GET 'http://boilerpipe-web.appspot.com/extract?url=http://yahoo.com&extractor=CanolaExtractor&output=htmlFragment';
+  #my $req = GET $boil22;
+  #my $res = $ua->request($req);
+  #print $res->decoded_content;
+   
+  $response = $ua->get($boil22);
   
   if ($response->is_success) {
      #print "blank for now. FM\n"; ##$response->decoded_content;  # or whatever
@@ -115,14 +154,32 @@ if (!$strategy)
      my $h = $rt->parse($response->decoded_content);
      $h->traverse(\&expand_urls, 1);
      print $h->as_HTML;
+     last;
   }
   else {
+        #try default if not tried.
+      if ($strategy && $nTrys == 1)
+      {
+         $strategy = ""; # default no strategy
+         #$nTrys = 2;
+        
+         next LINE;
+      }
+
+  
      print "FMDebug bad response for ($boil22)\n"; #die $response->status_line;
      #print $response->message;
      print $response->status_line;
+     last;
   }
+  
+} 
+  #print "\nTry($nTrys)\n";  
+   exit(0);
+   
 
-exit(0);
+
+
 
 sub expand_urls
 {
@@ -142,15 +199,25 @@ sub expand_urls
    return 1 unless defined $attr;
 
 
+# FM begin 8/11/11 remove images
 if ($link_elements{$e->tag} =~ /src/i)
 {
-   $e->delete();
-   return;
+#my $dummy = "BOBO";
+##print "FMDEBUG(1)  ". $link_elements{$e->tag} . "\n";
+#$e->attr("FFFFF");
+	#$e->attr($link_elements{$e->tag}, $dummy);
+$e->delete();
+
+return;
 }
+# FM end 8/11/11
 
    my $url = $e->attr($attr);
    
    return 1 unless defined $url;
+   
+
+   #return 1 unless ($e->attr($attr) !~ /mailto:/i);
 
    $url = URI->new_abs($url, $BASE);
    
